@@ -10,7 +10,7 @@ def sign(m):
     account = w3.eth.account.create()
     #account address
     eth_address = account.address
-    private_key = account.privateKey
+    private_key = account.private_key
 
     #message
     message = encode_defunct(text=m)
