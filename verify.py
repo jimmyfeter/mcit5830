@@ -8,30 +8,32 @@ def get_keys(challenge):
     Generate an Ethereum account from a mnemonic and sign a message.
     """
 
-    # BSC and Avalanche RPC endpoints
+    #endpoints
     BSC_RPC_URL = "https://bsc-dataseed.binance.org/"
     AVAX_RPC_URL = "https://api.avax.network/ext/bc/C/rpc"
 
-    # Initialize Web3 instances for both chains
+    #initialize Web3 instances 
     bsc_w3 = Web3(Web3.HTTPProvider(BSC_RPC_URL))
     avax_w3 = Web3(Web3.HTTPProvider(AVAX_RPC_URL))
 
-    # Verify connections
+    #verify connections
     if not bsc_w3.isConnected() or not avax_w3.isConnected():
         raise ConnectionError("Failed to connect to one or both networks.")
 
-    # Your mnemonic phrase
+    #your mnemonic phrase
     mnemonic = "sorry proof update famous swear soldier bullet upset lake solar deny fat"
     
-    # Generate account from mnemonic
+    #create account from mnemonic
+    web3 = Web3()
+    web3.eth.account.enable_unaudited_hdwallet_features()
     acct = Account.from_mnemonic(mnemonic)
     eth_addr = acct.address
 
-    # Encode and sign the challenge message
+    #encode and sign
     msg = encode_defunct(challenge)
     sig = acct.sign_message(msg)
 
-    # Return the signature and account address
+    
     return sig, eth_addr
 
 if __name__ == "__main__":
