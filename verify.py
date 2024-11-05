@@ -26,7 +26,7 @@ def get_keys(challenge):
     #create account from mnemonic
     web3 = Web3()
     web3.eth.account.enable_unaudited_hdwallet_features()
-    acct = Account.from_mnemonic(mnemonic)
+    acct = web3.eth.account.from_mnemonic(my_mnemonic)
     eth_addr = acct.address
 
     #encode and sign
