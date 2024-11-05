@@ -1,20 +1,4 @@
 from web3 import Web3
-import eth_account
-import os
-
-def get_keys(challenge,keyId = 0, filename = "eth_mnemonic.txt"):
-    """
-    Generate a stable private key
-    challenge - byte string
-    keyId (integer) - which key to use
-    filename - filename to read and store mnemonics
-
-    Each mnemonic is stored on a separate line
-    If fewer than (keyId+1) mnemonics have been generated, generate a new one and return that
-    """
-
-    from web3 import Web3
-import eth_account
 from eth_account import Account
 from eth_account.messages import encode_defunct
 import os
