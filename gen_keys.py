@@ -3,7 +3,7 @@ from eth_account import Account
 from eth_account.messages import encode_defunct
 import os
 
-def get_keys(challenge):
+def get_keys(challenge,keyId = 0, filename = "eth_mnemonic.txt"):
     """
     Generate an Ethereum account from a mnemonic and sign a message.
     """
