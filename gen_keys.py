@@ -17,7 +17,7 @@ def get_keys(challenge,keyId = 0, filename = "eth_mnemonic.txt"):
     avax_w3 = Web3(Web3.HTTPProvider(AVAX_RPC_URL))
 
     #verify connections
-    if not bsc_w3.isConnected() or not avax_w3.isConnected():
+    if not bsc_w3.is_connected() or not avax_w3.is_connected():
         raise ConnectionError("Failed to connect to one or both networks.")
 
     #your mnemonic phrase
