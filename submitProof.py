@@ -144,9 +144,9 @@ def send_signed_msg(proof, random_leaf):
     tx = contract.functions.submit(
         proof,     # Merkle proof for the prime
         random_leaf  # Leaf to claim (prime in bytes32 format)
-    ).buildTransaction({
+    ).transact({
         'from': acct.address,
-        'nonce': w3.eth.getTransactionCount(acct.address),
+        #'nonce': w3.eth.getTransactionCount(acct.address),
         'gas': 2000000,               # Estimate gas, adjust as needed
         'gasPrice': w3.eth.gas_price  # Set gas price
     })
