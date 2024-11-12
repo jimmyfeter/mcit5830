@@ -25,7 +25,8 @@ def merkle_assignment():
     tree = build_merkle(leaves)
 
     # Select a random leaf and create a proof for that leaf
-    random_leaf_index = 0 #TODO generate a random index from primes to claim (0 is already claimed)
+    #TODO generate a random index from primes to claim (0 is already claimed)
+    random_leaf_index = 0 
     proof = prove_merkle(tree, random_leaf_index)
 
     # This is the same way the grader generates a challenge for sign_challenge()
@@ -34,10 +35,10 @@ def merkle_assignment():
     addr, sig = sign_challenge(challenge)
 
     if sign_challenge_verify(challenge, addr, sig):
-        tx_hash = '0x'
+        #tx_hash = '0x'
         # TODO, when you are ready to attempt to claim a prime (and pay gas fees),
         #  complete this method and run your code with the following line un-commented
-        # tx_hash = send_signed_msg(proof, leaves[random_leaf_index])
+        tx_hash = send_signed_msg(proof, leaves[random_leaf_index])
 
 
 def generate_primes(num_primes):
@@ -139,7 +140,7 @@ def send_signed_msg(proof, random_leaf):
     # Get the contract instance
     contract = w3.eth.contract(address=address, abi=abi)
 
-    # Build the transaction to submit the Merkle proof and claim the prime
+    # Build the transaction to the Merkle proof and claim the prime
     tx = contract.functions.submit(
         proof,     # Merkle proof for the prime
         random_leaf  # Leaf to claim (prime in bytes32 format)
