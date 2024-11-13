@@ -14,30 +14,27 @@ def merkle_assignment():
         ready to attempt to claim a prime. You will need to complete the
         methods called by this method to generate the proof.
     """
-    # Generate the list of primes as integers
+    #generate primes 
     num_of_primes = 8192
     primes = generate_primes(num_of_primes)
 
-    # Create a version of the list of primes in bytes32 format
+    #convert to bytes32 format
     leaves = convert_leaves(primes)
 
-    # Build a Merkle tree using the bytes32 leaves as the Merkle tree's leaves
+    #build merkle tree 
     tree = build_merkle(leaves)
 
-    # Select a random leaf and create a proof for that leaf
-    #TODO generate a random index from primes to claim (0 is already claimed)
-    random_leaf_index = 0 
+    #generate a random index from primes to claim (0 is already claimed)
+    random_leaf_index = 1 
     proof = prove_merkle(tree, random_leaf_index)
 
-    # This is the same way the grader generates a challenge for sign_challenge()
     challenge = ''.join(random.choice(string.ascii_letters) for i in range(32))
-    # Sign the challenge to prove to the grader you hold the account
+    #sign the challenge
     addr, sig = sign_challenge(challenge)
 
     if sign_challenge_verify(challenge, addr, sig):
         #tx_hash = '0x'
-        # TODO, when you are ready to attempt to claim a prime (and pay gas fees),
-        #  complete this method and run your code with the following line un-commented
+        #when you are ready to attempt to claim a prime (and pay gas fees),
         tx_hash = send_signed_msg(proof, leaves[random_leaf_index])
         
 
@@ -65,7 +62,6 @@ def convert_leaves(primes_list):
         Converts the leaves (primes_list) to bytes32 format
         returns list of primes where list entries are bytes32 encodings of primes_list entries
     """
-    #Since Ethereum expects 32-byte data, we convert integers using int.to_bytes with padding
     return [prime.to_bytes(32, 'big') for prime in primes_list]
 
 
@@ -138,23 +134,25 @@ def send_signed_msg(proof, random_leaf):
     address, abi = get_contract_info(chain)
     w3 = connect_to(chain)
 
-    # Get the contract instance
+    #contract instance
     contract = w3.eth.contract(address=address, abi=abi)
 
-    # Build the transaction to the Merkle proof and claim the prime
+    #build the transaction to the Merkle proof and claim the prime
     tx = contract.functions.submit(
-        proof,     # Merkle proof for the prime
-        random_leaf  # Leaf to claim (prime in bytes32 format)
-    ).transact({
+        #Merkle proof for the prime
+        proof,  
+        #leaf to claim    
+        random_leaf  
+    ).build_transaction({
         'from': acct.address,
-        #'nonce': w3.eth.getTransactionCount(acct.address),
-        'gas': 2000000,               # Estimate gas, adjust as needed
-        'gasPrice': w3.eth.gas_price  # Set gas price
+        'gas': 2000000,
+        'gasPrice': w3.eth.gas_price,
+        'nonce': w3.eth.getTransactionCount(acct.address)
     })
 
-    # Sign the transaction with the private key
+    #sign the transaction with the private key
     signed_tx = w3.eth.account.sign_transaction(tx, acct.key)
-    # Send the signed transaction
+    #send transaction
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
 
 
