@@ -25,7 +25,7 @@ def merkle_assignment():
     tree = build_merkle(leaves)
 
     #generate a random index from primes to claim (0 is already claimed)
-    random_leaf_index = 1 
+    random_leaf_index = random.randint(0, len(leaves)) 
     proof = prove_merkle(tree, random_leaf_index)
 
     challenge = ''.join(random.choice(string.ascii_letters) for i in range(32))
@@ -145,7 +145,7 @@ def send_signed_msg(proof, random_leaf):
         random_leaf  
     ).build_transaction({
         'from': acct.address,
-        'gas': 2000000,
+        'gas': 500000,
         'gasPrice': w3.eth.gas_price,
         'nonce': w3.eth.get_transaction_count(acct.address) 
     })
