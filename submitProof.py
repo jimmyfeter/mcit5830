@@ -25,7 +25,7 @@ def merkle_assignment():
     tree = build_merkle(leaves)
 
     #generate a random index from primes to claim (0 is already claimed)
-    random_leaf_index = random.randint(0, len(leaves)) 
+    random_leaf_index = random.randint(0, len(leaves)-1) 
     proof = prove_merkle(tree, random_leaf_index)
 
     challenge = ''.join(random.choice(string.ascii_letters) for i in range(32))
