@@ -147,7 +147,7 @@ def send_signed_msg(proof, random_leaf):
         'from': acct.address,
         'gas': 2000000,
         'gasPrice': w3.eth.gas_price,
-        'nonce': w3.eth.getTransactionCount(acct.address)
+        'nonce': w3.eth.get_transaction_count(acct.address) 
     })
 
     #sign the transaction with the private key
