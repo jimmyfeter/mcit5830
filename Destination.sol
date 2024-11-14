@@ -27,7 +27,7 @@ contract Destination is AccessControl {
     
         require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
-        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, manager);
+        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol);
         address wrappedTokenAddr = address(newToken);
 
         underlying_tokens[_underlying_token] = wrappedTokenAddr;
