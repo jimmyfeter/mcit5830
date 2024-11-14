@@ -56,7 +56,8 @@ contract Destination is AccessControl {
         require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
         // Deploy a new BridgeToken contract with the given name and symbol
-        BridgeToken newToken = new BridgeToken(name, symbol);
+        BridgeToken newToken = new BridgeToken(name, symbol, initialSupply, decimals);
+
 
         // Map the underlying token to the new wrapped token and vice versa
         address wrappedTokenAddr = address(newToken);
