@@ -23,23 +23,25 @@ contract Destination is AccessControl {
         _grantRole(WARDEN_ROLE, admin);
     }
 
-    function createToken(address _underlying_token, string memory name, string memory symbol) 
-        public onlyRole(CREATOR_ROLE) returns (address) {
-        
+    function createToken(address _underlying_token, string memory name, string memory symbol ) public onlyRole(CREATOR_ROLE) returns(address) {
+    
         require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
-        // Deploy the new BridgeToken contract using this contract as the admin reference
-        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, address(this));
+        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, manager);
         address wrappedTokenAddr = address(newToken);
 
-        underlying_tokens[_underlying_token] = wrappedTokenAddr;
-        wrapped_tokens[wrappedTokenAddr] = _underlying_token;
+        // underlying_tokens[_underlying_token] = wrappedTokenAddr;
+        // wrapped_tokens[wrappedTokenAddr] = _underlying_token;
+
+        underlying_tokens[wrappedTokenAddr] = _underlying_token;
+        wrapped_tokens[_underlying_token] = wrappedTokenAddr;
         tokens.push(wrappedTokenAddr);
 
         emit Creation(_underlying_token, wrappedTokenAddr);
 
         return wrappedTokenAddr;
     }
+
 
     function wrap(address _underlying_token, address _recipient, uint256 _amount) 
         public onlyRole(WARDEN_ROLE) {
@@ -59,9 +61,11 @@ contract Destination is AccessControl {
         address underlyingTokenAddr = wrapped_tokens[_wrapped_token];
         require(underlyingTokenAddr != address(0), "Wrapped token not registered");
 
+        //burn tokens from the sender's balance
         BridgeToken wrappedToken = BridgeToken(_wrapped_token);
         wrappedToken.burnFrom(msg.sender, _amount);
 
+        //emit the unwrap event
         emit Unwrap(underlyingTokenAddr, _wrapped_token, msg.sender, _recipient, _amount);
     }
 }
