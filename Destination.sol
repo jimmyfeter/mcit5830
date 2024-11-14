@@ -23,24 +23,22 @@ contract Destination is AccessControl {
         _grantRole(WARDEN_ROLE, admin);
     }
 
-    function createToken(address _underlying_token, string memory name, string memory symbol ) public onlyRole(CREATOR_ROLE) returns(address) {
+    function createToken(address _underlying_token, string memory name, string memory symbol) 
+    public onlyRole(CREATOR_ROLE) returns(address) {
     
-        require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
+    require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
-        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, manager);
-        address wrappedTokenAddr = address(newToken);
+    BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, address(this));
+    address wrappedTokenAddr = address(newToken);
 
-        // underlying_tokens[_underlying_token] = wrappedTokenAddr;
-        // wrapped_tokens[wrappedTokenAddr] = _underlying_token;
+    underlying_tokens[_underlying_token] = wrappedTokenAddr;
+    wrapped_tokens[wrappedTokenAddr] = _underlying_token;
+    tokens.push(wrappedTokenAddr);
 
-        underlying_tokens[wrappedTokenAddr] = _underlying_token;
-        wrapped_tokens[_underlying_token] = wrappedTokenAddr;
-        tokens.push(wrappedTokenAddr);
+    emit Creation(_underlying_token, wrappedTokenAddr);
 
-        emit Creation(_underlying_token, wrappedTokenAddr);
-
-        return wrappedTokenAddr;
-    }
+    return wrappedTokenAddr;
+}
 
 
     function wrap(address _underlying_token, address _recipient, uint256 _amount) 
