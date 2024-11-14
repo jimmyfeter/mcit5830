@@ -25,41 +25,38 @@ contract Destination is AccessControl {
         _grantRole(WARDEN_ROLE, admin);
     }
 
-    function wrap(address _underlying_token, address _recipient, uint256 _amount) public onlyRole(WARDEN_ROLE) {
-        // Retrieve the wrapped token address for the given underlying token
-        address wrappedTokenAddr = underlying_tokens[_underlying_token];
-        require(wrappedTokenAddr != address(0), "Underlying token not registered");
+    function wrap(address _underlying_token, address _recipient, uint256 _amount ) public onlyRole(WARDEN_ROLE) {
+    // Check if the token is already registered
+    address wrappedTokenAddr = underlying_tokens[_underlying_token];
+    require(wrappedTokenAddr != address(0), "Underlying token not registered");
 
-        // Cast the wrapped token address to a BridgeToken instance and mint tokens to recipient
-        BridgeToken wrappedToken = BridgeToken(wrappedTokenAddr);
-        wrappedToken.mint(_recipient, _amount);
+    // Cast wrapped token address to a BridgeToken instance
+    BridgeToken wrappedToken = BridgeToken(wrappedTokenAddr);
 
-        emit Wrap(_underlying_token, wrappedTokenAddr, _recipient, _amount);
-    }
+    // Mint specified amount of tokens to recipient
+    wrappedToken.mint(_recipient, _amount);
 
-    function unwrap(address _wrapped_token, address _recipient, uint256 _amount) public {
-        // Retrieve the underlying token address for the given wrapped token
-        address underlyingTokenAddr = wrapped_tokens[_wrapped_token];
-        require(underlyingTokenAddr != address(0), "Wrapped token not registered");
+    // Emit the wrap event with details
+    emit Wrap(_underlying_token, wrappedTokenAddr, _recipient, _amount);
+}
 
-        // Cast the wrapped token address to a BridgeToken instance and burn tokens from sender
-        BridgeToken wrappedToken = BridgeToken(_wrapped_token);
-        wrappedToken.burnFrom(msg.sender, _amount);
+function unwrap(address _wrapped_token, address _recipient, uint256 _amount ) public {
+    // Check if the wrapped token is registered
+    address underlyingTokenAddr = wrapped_tokens[_wrapped_token];
+    require(underlyingTokenAddr != address(0), "Wrapped token not registered");
 
-        emit Unwrap(underlyingTokenAddr, _wrapped_token, msg.sender, _recipient, _amount);
-    }
+    // Cast the wrapped token address to a BridgeToken 
+    BridgeToken wrappedToken = BridgeToken(_wrapped_token);
 
-    function createToken(
-    address _underlying_token, 
-    string memory name, 
-    string memory symbol,
-    uint256 initialSupply,
-    uint8 decimals
-) 
-    public 
-    onlyRole(CREATOR_ROLE) 
-    returns(address) 
-{
+    // Burn the amount of tokens from the sender balance
+    wrappedToken.burnFrom(msg.sender, _amount);
+
+    // Emit the unwrap event with details
+    emit Unwrap(underlyingTokenAddr, _wrapped_token, msg.sender, _recipient, _amount);
+}
+
+function createToken(address _underlying_token, string memory name, string memory symbol, uint256 initialSupply, uint8 decimals) 
+    public onlyRole(CREATOR_ROLE) returns(address) {
     // Verify there isn't already a token mapped to the current asset
     require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
@@ -78,5 +75,6 @@ contract Destination is AccessControl {
     // Return the address of the token
     return wrappedTokenAddr;
 }
+
 
 }
