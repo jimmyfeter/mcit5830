@@ -49,24 +49,34 @@ contract Destination is AccessControl {
         emit Unwrap(underlyingTokenAddr, _wrapped_token, msg.sender, _recipient, _amount);
     }
 
-    function createToken(address _underlying_token, string memory name, string memory symbol) 
-        public onlyRole(CREATOR_ROLE) returns(address) {
-        
-        // Ensure the underlying token is not already mapped to a wrapped token
-        require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
+    function createToken(
+    address _underlying_token, 
+    string memory name, 
+    string memory symbol,
+    uint256 initialSupply,
+    uint8 decimals
+) 
+    public 
+    onlyRole(CREATOR_ROLE) 
+    returns(address) 
+{
+    // Verify there isn't already a token mapped to the current asset
+    require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
-        // Deploy a new BridgeToken contract with the given name and symbol
-        BridgeToken newToken = new BridgeToken(name, symbol, initialSupply, decimals);
+    // Deploy new BridgeToken contract 
+    BridgeToken newToken = new BridgeToken(name, symbol, initialSupply, decimals);
 
+    // Map the token to the new BridgeToken
+    address wrappedTokenAddr = address(newToken);
+    underlying_tokens[_underlying_token] = wrappedTokenAddr;
+    wrapped_tokens[wrappedTokenAddr] = _underlying_token;
+    tokens.push(wrappedTokenAddr);
 
-        // Map the underlying token to the new wrapped token and vice versa
-        address wrappedTokenAddr = address(newToken);
-        underlying_tokens[_underlying_token] = wrappedTokenAddr;
-        wrapped_tokens[wrappedTokenAddr] = _underlying_token;
-        tokens.push(wrappedTokenAddr);
+    // Emit the creation event
+    emit Creation(_underlying_token, wrappedTokenAddr);
 
-        emit Creation(_underlying_token, wrappedTokenAddr);
+    // Return the address of the token
+    return wrappedTokenAddr;
+}
 
-        return wrappedTokenAddr;
-    }
 }
