@@ -55,12 +55,19 @@ function unwrap(address _wrapped_token, address _recipient, uint256 _amount ) pu
     emit Unwrap(underlyingTokenAddr, _wrapped_token, msg.sender, _recipient, _amount);
 }
 
-function createToken(address _underlying_token, string memory name, string memory symbol, uint256 initialSupply, uint8 decimals) 
+function createToken(
+    address _underlying_token, 
+    string memory name, 
+    string memory symbol, 
+    uint256 initialSupply, 
+    uint8 decimals
+) 
     public onlyRole(CREATOR_ROLE) returns(address) {
+    
     // Verify there isn't already a token mapped to the current asset
     require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
-    // Deploy new BridgeToken contract 
+    // Deploy new BridgeToken contract
     BridgeToken newToken = new BridgeToken(name, symbol, initialSupply, decimals);
 
     // Map the token to the new BridgeToken
@@ -75,6 +82,7 @@ function createToken(address _underlying_token, string memory name, string memor
     // Return the address of the token
     return wrappedTokenAddr;
 }
+
 
 
 }
