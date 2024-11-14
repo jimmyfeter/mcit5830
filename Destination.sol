@@ -28,8 +28,8 @@ contract Destination is AccessControl {
         
         require(underlying_tokens[_underlying_token] == address(0), "Token already exists");
 
-        // Deploy the new BridgeToken contract, setting the admin directly within the function
-        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, getRoleMember(DEFAULT_ADMIN_ROLE, 0));
+        // Deploy the new BridgeToken contract using this contract as the admin reference
+        BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, address(this));
         address wrappedTokenAddr = address(newToken);
 
         underlying_tokens[_underlying_token] = wrappedTokenAddr;
