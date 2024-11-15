@@ -89,37 +89,21 @@ contract AMM is AccessControl{
 	/*
 		Use the ERC20 transferFrom to "pull" amtA of tokenA and amtB of tokenB from the sender
 	*/
-	function provideLiquidity( uint256 amtA, uint256 amtB ) public {
-    require( amtA > 0 || amtB > 0, 'Cannot provide 0 liquidity' );
-
-    //calculate the fee-adjustments
-    uint256 feeAdjustedAmtA = amtA * (10000 - feebps) / 10000;
-    uint256 feeAdjustedAmtB = amtB * (10000 - feebps) / 10000;
-
-    //transfer tokens from the user to the contract
-    ERC20(tokenA).transferFrom(msg.sender, address(this), feeAdjustedAmtA);
-    ERC20(tokenB).transferFrom(msg.sender, address(this), feeAdjustedAmtB);
-
-    //update the invariant: k = Ai * Bi, where Ai and Bi are the current balances of tokenA and tokenB in the contract
-    uint256 new_invariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
-    invariant = new_invariant;
-
-    emit LiquidityProvision(msg.sender, feeAdjustedAmtA, feeAdjustedAmtB);
-}
-
-function provideLiquidity(uint256 amtA, uint256 amtB) public {
+	function provideLiquidity(uint256 amtA, uint256 amtB) public {
     require(amtA > 0 || amtB > 0, 'Cannot provide 0 liquidity');
 
-    //transfer tokens from the user to the contract
+    // Transfer tokens from the user to the contract
     ERC20(tokenA).transferFrom(msg.sender, address(this), amtA);
     ERC20(tokenB).transferFrom(msg.sender, address(this), amtB);
 
-    //update the invariant: k = Ai * Bi, where Ai and Bi are the current balances of tokenA and tokenB in the contract
+    // Update the invariant: k = Ai * Bi, where Ai and Bi are the current balances of tokenA and tokenB in the contract
     uint256 new_invariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
     invariant = new_invariant;
 
     emit LiquidityProvision(msg.sender, amtA, amtB);
 }
+
+
 	/*
 		Use the ERC20 transfer function to send amtA of tokenA and amtB of tokenB to the target recipient
 		The modifier onlyRole(LP_ROLE) 
