@@ -43,11 +43,11 @@ contract AMM is AccessControl {
         uint256 qtyA = ERC20(tokenA).balanceOf(address(this));
         uint256 qtyB = ERC20(tokenB).balanceOf(address(this));
         
-        // First transfer the sell tokens to the contract
+        //transfer sell tokens to the contract
         if (sellToken == tokenA) {
             ERC20(tokenA).transferFrom(msg.sender, address(this), sellAmount);
             
-            // Calculate amounts after fee
+            //calculate amounts after fee
             uint256 amountWithFee = (sellAmount * (10000 - feebps));
             uint256 newQtyA = (qtyA * 10000) + amountWithFee;
             uint256 newQtyB = (invariant * 10000) / newQtyA;
@@ -55,10 +55,10 @@ contract AMM is AccessControl {
             
             require(tokensToSend > 0 && tokensToSend <= qtyB, 'Invalid swap amount');
             
-            // Perform the swap
+            //perform the swap
             ERC20(tokenB).transfer(msg.sender, tokensToSend);
             
-            // Update invariant based on actual balances
+            //update invariant based on actual balances
             invariant = ERC20(tokenA).balanceOf(address(this)) * 
                        ERC20(tokenB).balanceOf(address(this));
             
@@ -66,7 +66,7 @@ contract AMM is AccessControl {
         } else {
             ERC20(tokenB).transferFrom(msg.sender, address(this), sellAmount);
             
-            // Calculate amounts after fee
+            //calculate amounts after fee
             uint256 amountWithFee = (sellAmount * (10000 - feebps));
             uint256 newQtyB = (qtyB * 10000) + amountWithFee;
             uint256 newQtyA = (invariant * 10000) / newQtyB;
@@ -74,7 +74,7 @@ contract AMM is AccessControl {
             
             require(tokensToSend > 0 && tokensToSend <= qtyA, 'Invalid swap amount');
             
-            // Perform the swap
+            //perform  swap
             ERC20(tokenA).transfer(msg.sender, tokensToSend);
             
             // Update invariant based on actual balances
