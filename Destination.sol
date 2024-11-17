@@ -63,18 +63,16 @@ contract Destination is AccessControl {
 
         //deploy new BridgeToken contract with all required constructor arguments
         BridgeToken newToken = new BridgeToken(
-            name, 
-            symbol,
-            msg.sender,    // admin
-            address(this)  // bridge address
+            msg.sender,    // admin first
+            address(this), // bridge address second
+            name,         // name third
+            symbol        // symbol fourth
         );
 
         //map the tokens bidirectionally
         address wrappedTokenAddr = address(newToken);
-        //wrapped -> underlying
-        underlying_tokens[wrappedTokenAddr] = _underlying_token;
-        //underlying -> wrapped     
-        wrapped_tokens[_underlying_token] = wrappedTokenAddr;        
+        underlying_tokens[wrappedTokenAddr] = _underlying_token;     // wrapped -> underlying
+        wrapped_tokens[_underlying_token] = wrappedTokenAddr;        // underlying -> wrapped
         tokens.push(wrappedTokenAddr);
 
         //emit the creation event
