@@ -1,7 +1,8 @@
 from web3 import Web3
 from web3.contract import Contract
 from web3.providers.rpc import HTTPProvider
-from web3.middleware import geth_poa_middleware #Necessary for POA chains
+#Used for POA
+from web3.middleware import geth_poa_middleware 
 import json
 from datetime import datetime
 import pandas as pd
@@ -19,14 +20,16 @@ def scanBlocks(chain,start_block,end_block,contract_address):
 	and writes information about the events to the file "deposit_logs.csv"
     """
     if chain == 'avax':
-        api_url = f"https://api.avax-test.network/ext/bc/C/rpc" #AVAX C-chain testnet
+      #AVAX C-chain testnet
+        api_url = f"https://api.avax-test.network/ext/bc/C/rpc" 
 
     if chain == 'bsc':
-        api_url = f"https://data-seed-prebsc-1-s1.binance.org:8545/" #BSC testnet
+      #BSC testnet
+        api_url = f"https://data-seed-prebsc-1-s1.binance.org:8545/" 
 
     if chain in ['avax','bsc']:
         w3 = Web3(Web3.HTTPProvider(api_url))
-        # inject the poa compatibility middleware to the innermost layer
+        #inject the middleware
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     else:
         w3 = Web3(Web3.HTTPProvider(api_url))
